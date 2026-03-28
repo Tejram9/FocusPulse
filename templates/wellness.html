@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Setup - FocusPulse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">FocusPulse</div>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('planner') }}">Planner</a>
+            <a href="{{ url_for('focus') }}">Focus Mode</a>
+            <a href="{{ url_for('wellness') }}">Wellness</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            <button id="themeToggleBtn" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-size: 16px;">🌙</button>
+        </div>
+    </nav>
+
+    <div class="wellness-page-wrapper">
+        <div class="wellness-card">
+            <div class="wellness-content">
+                <div class="wellness-panel-left">
+                    <div class="wellness-mode">Active Break Setup</div>
+                    <div class="wellness-controls">
+                        <button class="wellness-btn-start" onclick="startWellness()">Start Wellness Session</button>
+                    </div>
+                </div>
+
+                <div class="wellness-panel-right">
+                    <div class="wellness-form-group wellness-multi-input">
+                        <div class="wellness-input-wrapper">
+                            <label for="wMin">Min</label>
+                            <input id="wMin" type="number" value="0" min="0" step="1">
+                        </div>
+                        <div class="wellness-input-wrapper">
+                            <label for="wSec">Sec</label>
+                            <input id="wSec" type="number" value="30" min="0" step="1">
+                        </div>
+                    </div>
+
+                    <div class="wellness-form-group">
+                        <label for="rSec">Rest Duration</label>
+                        <div class="wellness-input-wrapper">
+                            <input id="rSec" type="number" value="10" min="0" step="1">
+                            <span class="wellness-unit">sec</span>
+                        </div>
+                    </div>
+
+                    <div class="wellness-form-group">
+                        <label for="goalRounds">Target Rounds</label>
+                        <div class="wellness-input-wrapper">
+                            <input id="goalRounds" type="number" value="5" min="1" step="1">
+                            <span class="wellness-unit">rounds</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wellness-info-grid">
+            <div class="wellness-info-card">
+                <h3>Recent Wellness Sessions</h3>
+
+                {% if recent_wellness %}
+                    {% for session in recent_wellness %}
+                    <div class="wellness-stat-row">
+                        <span class="wellness-stat-label">
+                            {{ session["active_minutes"] }}m {{ session["active_seconds"] }}s × {{ session["rounds"] }} rounds
+                        </span>
+                        <span class="wellness-stat-value">
+                            {{ session["completed_rounds"] }} done
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="wellness-info-text">No wellness sessions recorded yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="wellness-info-card">
+                <h3>Why Wellness Mode?</h3>
+                <p class="wellness-info-text">
+                    Students often sit for long periods during study sessions. Wellness Mode helps you take active
+                    breaks, refresh your body, and maintain healthy study habits through short guided movement rounds.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startWellness() {
+            const wMin = document.getElementById("wMin").value || 0;
+            const wSec = document.getElementById("wSec").value || 30;
+            const rSec = document.getElementById("rSec").value || 10;
+            const goalRounds = document.getElementById("goalRounds").value || 5;
+
+            localStorage.setItem("wellness_wMin", wMin);
+            localStorage.setItem("wellness_wSec", wSec);
+            localStorage.setItem("wellness_rSec", rSec);
+            localStorage.setItem("wellness_goalRounds", goalRounds);
+
+            window.location.href = "{{ url_for('wellness_timer') }}";
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</body>
+</html>

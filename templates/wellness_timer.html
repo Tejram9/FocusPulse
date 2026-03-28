@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Timer - FocusPulse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">FocusPulse</div>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('planner') }}">Planner</a>
+            <a href="{{ url_for('focus') }}">Focus Mode</a>
+            <a href="{{ url_for('wellness') }}">Wellness</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            <button id="themeToggleBtn" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-size: 16px;">🌙</button>
+        </div>
+    </nav>
+
+    <div class="wellness-timer-container">
+        <div class="wellness-timer-card">
+            <h2 class="wellness-card-title" id="mode-display">Active Break</h2>
+            <p class="wellness-card-desc">Take short movement breaks to refresh your study routine.</p>
+
+            <div class="wellness-timer-wrapper">
+                <div id="wellness-time-display">00:00</div>
+            </div>
+
+            <div class="wellness-controls-row">
+                <button onclick="pauseWellness()">Pause</button>
+                <button onclick="resetWellness()">Reset</button>
+                <button class="wellness-start-btn" onclick="startWellnessTimer()">Start</button>
+            </div>
+
+            <div class="wellness-stats-row">
+                <div class="wellness-stat-box">
+                    <span>Completed Rounds</span>
+                    <strong id="completedRounds">0</strong>
+                </div>
+                <div class="wellness-stat-box">
+                    <span>Total Active Time</span>
+                    <strong id="totalActiveTime">0s</strong>
+                </div>
+                <div class="wellness-stat-box">
+                    <span>Goal Rounds</span>
+                    <strong id="goalRoundsText">0</strong>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('save_wellness_session') }}" onsubmit="prepareWellnessData()">
+                <input type="hidden" name="active_minutes" id="hidden_active_minutes">
+                <input type="hidden" name="active_seconds" id="hidden_active_seconds">
+                <input type="hidden" name="rest_seconds" id="hidden_rest_seconds">
+                <input type="hidden" name="rounds" id="hidden_rounds">
+                <input type="hidden" name="completed_rounds" id="hidden_completed_rounds">
+                <input type="hidden" name="total_active_time" id="hidden_total_active_time">
+
+                <button type="submit" class="wellness-save-btn">Save Wellness Session</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let timer = null;
+        let mode = "active";
+        let currentRound = 0;
+
+        let activeMinutes = parseInt(localStorage.getItem("wellness_wMin")) || 0;
+        let activeSeconds = parseInt(localStorage.getItem("wellness_wSec")) || 30;
+        let restSeconds = parseInt(localStorage.getItem("wellness_rSec")) || 10;
+        let goalRounds = parseInt(localStorage.getItem("wellness_goalRounds")) || 5;
+
+        let activeTime = (activeMinutes * 60) + activeSeconds;
+        if (activeTime === 0) activeTime = 30;
+
+        let timeLeft = activeTime;
+        let totalActiveTime = 0;
+
+        const display = document.getElementById("wellness-time-display");
+        const modeDisplay = document.getElementById("mode-display");
+
+        document.getElementById("goalRoundsText").innerText = goalRounds;
+        display.innerText = formatTime(timeLeft);
+
+        function formatTime(sec) {
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+        }
+
+        function startWellnessTimer() {
+            if (timer) return;
+
+            timer = setInterval(() => {
+                timeLeft--;
+                display.innerText = formatTime(timeLeft);
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timer = null;
+
+                    if (mode === "active") {
+                        currentRound++;
+                        totalActiveTime += activeTime;
+
+                        document.getElementById("completedRounds").innerText = currentRound;
+                        document.getElementById("totalActiveTime").innerText = totalActiveTime + "s";
+
+                        if (currentRound >= goalRounds) {
+                            modeDisplay.innerText = "Wellness Complete";
+                            display.innerText = "DONE";
+                            return;
+                        }
+
+                        mode = "rest";
+                        modeDisplay.innerText = "Rest Phase";
+                        timeLeft = restSeconds;
+                        display.innerText = formatTime(timeLeft);
+                        startWellnessTimer();
+                    } else {
+                        mode = "active";
+                        modeDisplay.innerText = "Active Break";
+                        timeLeft = activeTime;
+                        display.innerText = formatTime(timeLeft);
+                        startWellnessTimer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseWellness() {
+            clearInterval(timer);
+            timer = null;
+            modeDisplay.innerText = "Paused";
+        }
+
+        function resetWellness() {
+            clearInterval(timer);
+            timer = null;
+            mode = "active";
+            currentRound = 0;
+            totalActiveTime = 0;
+            timeLeft = activeTime;
+
+            modeDisplay.innerText = "Active Break";
+            display.innerText = formatTime(timeLeft);
+            document.getElementById("completedRounds").innerText = 0;
+            document.getElementById("totalActiveTime").innerText = "0s";
+        }
+
+        function prepareWellnessData() {
+            document.getElementById("hidden_active_minutes").value = activeMinutes;
+            document.getElementById("hidden_active_seconds").value = activeSeconds;
+            document.getElementById("hidden_rest_seconds").value = restSeconds;
+            document.getElementById("hidden_rounds").value = goalRounds;
+            document.getElementById("hidden_completed_rounds").value = currentRound;
+            document.getElementById("hidden_total_active_time").value = totalActiveTime;
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</body>
+</html>

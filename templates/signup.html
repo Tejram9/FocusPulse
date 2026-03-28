@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusPulse | Sign Up</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    <div style="position: absolute; top: 20px; right: 20px;">
+        <button id="themeToggleBtnOut" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">🌙</button>
+    </div>
+
+
+<div class="main-wrapper">
+
+    <div class="hero-card">
+
+        <h2 class="logo">FocusPulse</h2>
+        <p class="tagline">Create your account to boost your productivity</p>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flash-message">
+                {% for msg in messages %}
+                    <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/signup" class="form-card">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+
+            <button type="submit" class="btn btn-primary">Sign Up</button>
+        </form>
+
+        <p style="margin-top:15px;">
+            Already have an account? <a href="/login">Login here</a>
+        </p>
+
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</body>
+</html>

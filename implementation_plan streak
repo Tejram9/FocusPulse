@@ -1,0 +1,53 @@
+# Consistency Streak Tracker Implementation Plan
+
+## Goal Description
+The goal of this task is to add a "Consistency Streak Tracker" to the FocusPulse website. This feature encourages student productivity by tracking consecutive days where the user completes at least one task or focus session. The streak will be prominently displayed on the dashboard with a clean, modern, card-based UI.
+
+## Proposed Changes
+
+### Database Extensions
+- **[MODIFY] [db_setup.py](file:///d:/FocusPulse/db_setup.py)**
+  - Add logic to the [init_db()](file:///d:/FocusPulse/db_setup.py#13-168) function using `PRAGMA table_info` to safely inject new columns into the `users` table if they do not exist:
+    - `current_streak` (INTEGER DEFAULT 0)
+    - `best_streak` (INTEGER DEFAULT 0)
+    - `last_active_date` (TEXT)
+  - This approach ensures backward compatibility and requires no manual database migrations.
+
+---
+### Backend Logic (Flask)
+- **[MODIFY] [app.py](file:///d:/FocusPulse/app.py)**
+  - **New Helper Functions**:
+    - `update_user_streak(user_id)`: Checks the `last_active_date`. If it's today, do nothing. If it's yesterday, increment `current_streak` by 1. If older, reset `current_streak` to 1. Update `best_streak` if beaten. Finally, update `last_active_date` to today.
+    - `get_user_streak(user_id)`: Retrieves the streak data. Crucially, before returning, it checks if the user missed yesterday and today. If they did, it resets the `current_streak` to 0 in the database and returns 0.
+  - **Hooking into Endpoints**: Call `update_user_streak(user_id)` inside:
+    - `/save-focus-session` (when a focus session is saved).
+    - `/update-status/<int:task_id>` (if [status](file:///d:/FocusPulse/app.py#170-186) == 'Completed').
+    - `/api/tasks/<int:task_id>/complete` (when task toggled).
+    - `/api/tasks/<int:task_id>` (PUT request, if `data.get("status")` == 'Completed').
+  - **Dashboard Route update**: 
+    - In `/dashboard`, call `get_user_streak(user_id)` and pass `current_streak` and `best_streak` to `render_template`.
+
+---
+### Frontend User Interface
+- **[MODIFY] [templates/dashboard.html](file:///d:/FocusPulse/templates/dashboard.html)**
+  - Add a dedicated `<div class="streak-card">` above the existing stat cards.
+  - Include a modern flame icon (🔥), current streak count, best streak, and dynamic motivational text (e.g., "General: Start your streak", "1-2 days: Great start!", "3+ days: You're on fire!").
+  - The UI will be consistent with FocusPulse's design (soft shadows, rounded corners, subtle gradients).
+
+- **[MODIFY] [static/css/style.css](file:///d:/FocusPulse/static/css/style.css)**
+  - Add the following styles for `.streak-card`, `.streak-icon`, `.streak-details`, and `.motivational-text`. The card will utilize a purple/blue gradient to give it a premium, modern feel.
+
+## Verification Plan
+
+### Automated / Backend Tests
+1. **Initialize Database**: Stop the development server and run `python db_setup.py`. This verifies the new schema applies without errors.
+2. **Launch Server**: Run `python app.py` and ensure the application boots cleanly.
+
+### Manual Verification
+1. **Verify Default State**: Log in and visit the dashboard. The streak should display "0 Days".
+2. **Trigger Streak Increment (Task)**: Go to Planner, create a task, and mark it as "Completed".
+3. **Check Streak Update**: Return to the dashboard. The streak should now display "1 Day" and the motivational message should update.
+4. **Trigger Streak Increment (Focus)**: Go to Focus Mode, add a 25-minute focus session.
+5. **Check Redundancy Handling**: Return to the dashboard. Ensure the streak remains at "1 Day" (since multiple activities on the same day do not erroneously increment the streak multiple times).
+6. **Simulate Day Change**: Manually edit the SQLite database to set the user's `last_active_date` to yesterday. Visit the dashboard, mark a task as complete, and ensure the streak increments to 2.
+7. **Simulate Broken Streak**: Manually edit the SQLite database to set the user's `last_active_date` to 2 days ago. Simply visit the dashboard (without doing any productive task). The streak should automatically reset and show 0.

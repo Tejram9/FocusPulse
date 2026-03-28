@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FocusPulse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+
+<body>
+
+    {% if session.get("user_id") %}
+
+    <!-- HOME LANDING NAVBAR -->
+    <nav class="navbar">
+        <div class="logo">FocusPulse</div>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('planner') }}">Planner</a>
+            <a href="{{ url_for('focus') }}">Focus Mode</a>
+            <a href="{{ url_for('wellness') }}">Wellness</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            <div class="streak-badge {% if current_streak == 0 %}streak-badge--zero{% endif %}" title="{% if current_streak > 0 %}{{ current_streak }}-day streak! Keep it up!{% else %}Complete a task to start your streak!{% endif %}">
+                <span class="streak-flame">🔥</span>
+                <span class="streak-count">{{ current_streak }}</span>
+                <span class="streak-label">day{% if current_streak != 1 %}s{% endif %}</span>
+            </div>
+            <button id="themeToggleBtn" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-size: 16px;">🌙</button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="home-hero">
+        <div class="home-hero-inner">
+            <div class="home-badge">Student Productivity Platform</div>
+
+            <h1 class="home-title">
+                Plan smarter, focus deeper, and track your progress with <span>FocusPulse</span>
+            </h1>
+
+            <p class="home-subtitle">
+                FocusPulse helps students manage tasks, improve focus, and monitor productivity
+                through a clean dashboard and planner experience.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <ul class="flash-message home-flash">
+                {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+
+            <p class="greeting home-greeting">Welcome back, {{ session.get("user_name") }} 👋</p>
+
+            <!-- DAILY MOTIVATION WIDGET -->
+            <div class="motivation-widget" style="margin-top: 30px; margin-bottom: 30px;">
+                <div class="motivation-icon">✨</div>
+                <div class="motivation-content" style="text-align: left;">
+                    <p class="motivation-label">Daily Motivation</p>
+                    <blockquote class="motivation-quote">"{{ daily_quote.text }}"</blockquote>
+                    <p class="motivation-author">— {{ daily_quote.author }}</p>
+                </div>
+            </div>
+
+            <div class="hero-buttons">
+             <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+             <a href="{{ url_for('planner') }}" class="btn btn-secondary">Open Planner</a>
+             <a href="{{ url_for('focus') }}" class="btn btn-secondary">Focus Mode</a>
+             <a href="{{ url_for('wellness') }}" class="btn btn-secondary">Wellness</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="home-section" id="features">
+        <div class="home-section-header">
+            <h2>Core Features</h2>
+            <p>Everything a student needs to stay organized and productive.</p>
+        </div>
+
+        <div class="home-grid home-grid-3">
+            <div class="home-card">
+                <h3>Task Planner</h3>
+                <p>Create tasks, assign deadlines, and track status with a simple planner.</p>
+            </div>
+            <div class="home-card">
+                <h3>Productivity Dashboard</h3>
+                <p>View total tasks, pending work, completed work, and productivity percentage.</p>
+            </div>
+            <div class="home-card">
+                <h3>Focus Tracking</h3>
+                <p>Support your study routine with a system designed around better daily focus.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- BENEFITS -->
+    <section class="home-section home-soft-section" id="benefits">
+        <div class="home-section-header">
+            <h2>Why FocusPulse?</h2>
+            <p>Built for students who want clarity, consistency, and better daily control.</p>
+        </div>
+
+        <div class="home-grid home-grid-2">
+            <div class="home-card">
+                <h3>Easy to Use</h3>
+                <p>Clean interface with minimal distractions and straightforward navigation.</p>
+            </div>
+            <div class="home-card">
+                <h3>Progress Visibility</h3>
+                <p>See your work status instantly through dashboard cards and recent task tracking.</p>
+            </div>
+            <div class="home-card">
+                <h3>Motivating Workflow</h3>
+                <p>Watching your completed tasks and productivity score grow keeps you motivated.</p>
+            </div>
+            <div class="home-card">
+                <h3>Project-Ready Solution</h3>
+                <p>A polished Flask-based student productivity system suitable for college demos.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="home-section" id="faq">
+        <div class="home-section-header">
+            <h2>Frequently Asked Questions</h2>
+            <p>Quick answers about the platform.</p>
+        </div>
+
+        <div class="home-faq-wrap">
+            <div class="home-faq-item">
+                <h3>Who is FocusPulse for?</h3>
+                <p>It is designed mainly for students who want better task management and productivity tracking.</p>
+            </div>
+            <div class="home-faq-item">
+                <h3>What can I do after login?</h3>
+                <p>You can open the planner, add tasks, update statuses, delete tasks, and monitor progress on the
+                    dashboard.</p>
+            </div>
+            <div class="home-faq-item">
+                <h3>Does it show progress visually?</h3>
+                <p>Yes. Dashboard cards display task counts and productivity percentage.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <section class="home-section home-footer-section" id="contact">
+        <div class="home-section-header">
+            <h2>Ready to start?</h2>
+            <p>Take control of your tasks and academic productivity with FocusPulse.</p>
+        </div>
+
+        <div class="hero-buttons">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Open Dashboard</a>
+            <a href="{{ url_for('planner') }}" class="btn btn-secondary">Go to Planner</a>
+            <a href="{{ url_for('focus') }}" class="btn btn-secondary">Focus Mode</a>
+        </div>
+
+        <p class="home-footer-text">© 2026 FocusPulse — Student Productivity Platform</p>
+    </section>
+
+    {% else %}
+    
+    <div style="position: absolute; top: 20px; right: 20px;">
+        <button id="themeToggleBtnOut" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">🌙</button>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="hero-card">
+            <h1 class="logo">FocusPulse</h1>
+            <p class="tagline">
+                A smart student productivity platform for planning, focus, and progress tracking.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <ul class="flash-message">
+                {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+
+            <p class="greeting">Welcome to FocusPulse 👋</p>
+
+            <div class="hero-buttons">
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Signup</a>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</body>
+
+</html>
