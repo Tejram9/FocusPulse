@@ -71,79 +71,88 @@ def get_db_connection():
 # ------------------------------
 def get_user_streak(user_id):
     conn = get_db_connection()
-    user = conn.execute("SELECT current_streak, best_streak, last_active_date FROM users WHERE id = ?", (user_id,)).fetchone()
-    
-    if not user:
-        conn.close()
-        return {"current_streak": 0, "best_streak": 0}
+    try:
+        user = conn.execute("SELECT current_streak, best_streak, last_active_date FROM users WHERE id = ?", (user_id,)).fetchone()
+        
+        if not user:
+            conn.close()
+            return {"current_streak": 0, "best_streak": 0}
 
-    current_streak = user["current_streak"]
-    best_streak = user["best_streak"]
-    last_active_str = user["last_active_date"]
-    
-    today_date = date.today()
-    yesterday = today_date - timedelta(days=1)
-    
-    # If they haven't been active today OR yesterday, their streak is broken.
-    if last_active_str:
-        try:
-            last_active_date = datetime.strptime(last_active_str, "%Y-%m-%d").date()
-            if last_active_date < yesterday:
-                current_streak = 0
-                conn.execute("UPDATE users SET current_streak = 0 WHERE id = ?", (user_id,))
-                conn.commit()
-        except ValueError:
-            pass
-            
-    conn.close()
-    return {"current_streak": current_streak, "best_streak": best_streak}
+        current_streak = user["current_streak"] or 0
+        best_streak = user["best_streak"] or 0
+        last_active_str = user["last_active_date"]
+        
+        today_date = date.today()
+        yesterday = today_date - timedelta(days=1)
+        
+        # If they haven't been active today OR yesterday, their streak is broken.
+        if last_active_str:
+            try:
+                last_active_date = datetime.strptime(last_active_str, "%Y-%m-%d").date()
+                if last_active_date < yesterday:
+                    current_streak = 0
+                    conn.execute("UPDATE users SET current_streak = 0 WHERE id = ?", (user_id,))
+                    conn.commit()
+            except ValueError:
+                pass
+                
+        conn.close()
+        return {"current_streak": current_streak, "best_streak": best_streak}
+    except Exception as e:
+        conn.close()
+        print(f"Error getting user streak: {e}")
+        return {"current_streak": 0, "best_streak": 0}
 
 
 def update_user_streak(user_id):
     conn = get_db_connection()
-    user = conn.execute("SELECT current_streak, best_streak, last_active_date FROM users WHERE id = ?", (user_id,)).fetchone()
-    
-    if not user:
-        conn.close()
-        return
+    try:
+        user = conn.execute("SELECT current_streak, best_streak, last_active_date FROM users WHERE id = ?", (user_id,)).fetchone()
+        
+        if not user:
+            conn.close()
+            return
 
-    today_str = date.today().isoformat()
-    last_active_str = user["last_active_date"]
-    
-    current_streak = user["current_streak"]
-    best_streak = user["best_streak"]
-    
-    if last_active_str == today_str:
-        # Already active today, do nothing
-        conn.close()
-        return
+        today_str = date.today().isoformat()
+        last_active_str = user["last_active_date"]
         
-    if last_active_str:
-        try:
-            last_active_date = datetime.strptime(last_active_str, "%Y-%m-%d").date()
-            yesterday = date.today() - timedelta(days=1)
+        current_streak = user["current_streak"] or 0
+        best_streak = user["best_streak"] or 0
+        
+        if last_active_str == today_str:
+            # Already active today, do nothing
+            conn.close()
+            return
             
-            if last_active_date == yesterday:
-                # Maintained streak
-                current_streak += 1
-            else:
-                # Missed a day, streak resets to 1 (since they were active today)
+        if last_active_str:
+            try:
+                last_active_date = datetime.strptime(last_active_str, "%Y-%m-%d").date()
+                yesterday = date.today() - timedelta(days=1)
+                
+                if last_active_date == yesterday:
+                    # Maintained streak
+                    current_streak += 1
+                else:
+                    # Missed a day, streak resets to 1 (since they were active today)
+                    current_streak = 1
+            except ValueError:
                 current_streak = 1
-        except ValueError:
+        else:
+            # First time activity
             current_streak = 1
-    else:
-        # First time activity
-        current_streak = 1
-        
-    if current_streak > best_streak:
-        best_streak = current_streak
-        
-    conn.execute(
-        "UPDATE users SET current_streak = ?, best_streak = ?, last_active_date = ? WHERE id = ?",
-        (current_streak, best_streak, today_str, user_id)
-    )
-    conn.commit()
-    conn.close()
+            
+        if current_streak > best_streak:
+            best_streak = current_streak
+            
+        conn.execute(
+            "UPDATE users SET current_streak = ?, best_streak = ?, last_active_date = ? WHERE id = ?",
+            (current_streak, best_streak, today_str, user_id)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        conn.close()
+        print(f"Error updating user streak: {e}")
 
 
 # ------------------------------
@@ -328,35 +337,45 @@ def dashboard():
     user_id = session["user_id"]
     conn = get_db_connection()
 
-    total_tasks = conn.execute(
-        "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ?",
-        (user_id,)
-    ).fetchone()["count"]
+    total_tasks = 0
+    completed_tasks = 0
+    pending_tasks = 0
+    in_progress_tasks = 0
+    recent_tasks = []
 
-    completed_tasks = conn.execute(
-        "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'Completed'",
-        (user_id,)
-    ).fetchone()["count"]
+    try:
+        total_tasks = conn.execute(
+            "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ?",
+            (user_id,)
+        ).fetchone()["count"]
 
-    pending_tasks = conn.execute(
-        "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'Pending'",
-        (user_id,)
-    ).fetchone()["count"]
+        completed_tasks = conn.execute(
+            "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'Completed'",
+            (user_id,)
+        ).fetchone()["count"]
 
-    in_progress_tasks = conn.execute(
-        "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'In Progress'",
-        (user_id,)
-    ).fetchone()["count"]
+        pending_tasks = conn.execute(
+            "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'Pending'",
+            (user_id,)
+        ).fetchone()["count"]
 
-    recent_tasks = conn.execute(
-        """
-        SELECT * FROM tasks
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        LIMIT 5
-        """,
-        (user_id,)
-    ).fetchall()
+        in_progress_tasks = conn.execute(
+            "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'In Progress'",
+            (user_id,)
+        ).fetchone()["count"]
+
+        recent_tasks = conn.execute(
+            """
+            SELECT * FROM tasks
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 5
+            """,
+            (user_id,)
+        ).fetchall()
+    except Exception as e:
+        print(f"Error fetching dashboard tasks: {e}")
+        pass
 
     conn.close()
 
@@ -391,24 +410,33 @@ def focus():
     user_id = session["user_id"]
     conn = get_db_connection()
 
-    tasks = conn.execute(
-        """
-        SELECT task_title FROM tasks
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        """,
-        (user_id,)
-    ).fetchall()
+    tasks = []
+    recent_sessions = []
+    
+    try:
+        tasks = conn.execute(
+            """
+            SELECT task_title FROM tasks
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id,)
+        ).fetchall()
+    except Exception as e:
+        print(f"Error fetching focus tasks: {e}")
 
-    recent_sessions = conn.execute(
-        """
-        SELECT * FROM focus_sessions
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        LIMIT 5
-        """,
-        (user_id,)
-    ).fetchall()
+    try:
+        recent_sessions = conn.execute(
+            """
+            SELECT * FROM focus_sessions
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 5
+            """,
+            (user_id,)
+        ).fetchall()
+    except Exception as e:
+        print(f"Error fetching recent focus sessions: {e}")
 
     conn.close()
     return render_template("focus.html", tasks=tasks, recent_sessions=recent_sessions)
@@ -436,15 +464,20 @@ def save_focus_session():
         return redirect(url_for("focus"))
 
     conn = get_db_connection()
-    conn.execute(
-        """
-        INSERT INTO focus_sessions (user_id, task_title, duration, distraction_count, focus_score, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (user_id, task_title, duration, distraction_count, focus_score, notes)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            """
+            INSERT INTO focus_sessions (user_id, task_title, duration, distraction_count, focus_score, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, task_title, duration, distraction_count, focus_score, notes)
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"Error saving focus session: {e}")
+        # flash("Could not save session at this time.", "error")
+    finally:
+        conn.close()
 
     update_user_streak(user_id)
 
@@ -480,15 +513,19 @@ def wellness():
     user_id = session["user_id"]
     conn = get_db_connection()
 
-    recent_wellness = conn.execute(
-        """
-        SELECT * FROM wellness_sessions
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        LIMIT 5
-        """,
-        (user_id,)
-    ).fetchall()
+    recent_wellness = []
+    try:
+        recent_wellness = conn.execute(
+            """
+            SELECT * FROM wellness_sessions
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 5
+            """,
+            (user_id,)
+        ).fetchall()
+    except Exception as e:
+        print(f"Error fetching wellness: {e}")
 
     conn.close()
     return render_template("wellness.html", recent_wellness=recent_wellness)
@@ -641,6 +678,57 @@ def update_task(task_id):
 
     return jsonify({"success": True})
 
+@app.route("/statistics")
+@login_required
+def statistics():
+    user_id = session["user_id"]
+    conn = get_db_connection()
+    
+    completed_tasks = 0
+    recent_sessions = []
+    
+    try:
+        completed_tasks = conn.execute(
+            "SELECT COUNT(*) AS count FROM tasks WHERE user_id = ? AND status = 'Completed'",
+            (user_id,)
+        ).fetchone()["count"]
+        
+        recent_sessions = conn.execute(
+            """
+            SELECT * FROM focus_sessions
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 10
+            """,
+            (user_id,)
+        ).fetchall()
+    except Exception as e:
+        print(f"Error fetching statistics: {e}")
+    
+    streak_info = get_user_streak(user_id)
+    conn.close()
+    
+    return render_template("statistics.html", 
+        completed_tasks=completed_tasks, 
+        recent_sessions=recent_sessions,
+        current_streak=streak_info["current_streak"],
+        best_streak=streak_info["best_streak"]
+    )
+
+@app.route("/leaderboard")
+@login_required
+def leaderboard():
+    # Mock data for demonstration of competitive leaderboard
+    # In a real app, this would query a global leaderboard table
+    mock_leaderboard = [
+        {"username": "ScholarPro", "score": 9800, "streak": 45, "rank": 1},
+        {"username": "StudyNinja", "score": 8540, "streak": 32, "rank": 2},
+        {"username": session.get("user_name", "You"), "score": 7320, "streak": 12, "rank": 3},
+        {"username": "FocusMaster", "score": 6400, "streak": 20, "rank": 4},
+        {"username": "NightOwl99", "score": 5100, "streak": 5, "rank": 5},
+    ]
+    return render_template("leaderboard.html", leaderboard=mock_leaderboard)
+
 @app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
 @login_required
 def delete_api_task(task_id):
@@ -676,4 +764,4 @@ def toggle_task(task_id):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=True)

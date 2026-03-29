@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const toggleBtns = document.querySelectorAll('#themeToggleBtn, #themeToggleBtnOut');
-    
+
     // Check local storage
     const currentTheme = localStorage.getItem('theme') || 'light';
-    
+
     if (currentTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         toggleBtns.forEach(btn => btn.textContent = '☀️');

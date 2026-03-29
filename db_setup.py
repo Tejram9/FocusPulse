@@ -171,6 +171,15 @@ def init_db():
             if "created_at" not in focus_columns:
                 cursor.execute("ALTER TABLE focus_sessions ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 
+            if "notes" not in focus_columns:
+                cursor.execute("ALTER TABLE focus_sessions ADD COLUMN notes TEXT")
+                
+            if "duration" not in focus_columns:
+                cursor.execute("ALTER TABLE focus_sessions ADD COLUMN duration INTEGER DEFAULT 0")
+                
+            if "date" not in focus_columns:
+                cursor.execute("ALTER TABLE focus_sessions ADD COLUMN date TEXT DEFAULT (date('now', 'localtime'))")
+
             conn.commit()
             print("Database schema created successfully.")
 

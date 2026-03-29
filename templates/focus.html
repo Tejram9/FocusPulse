@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus Mode - FocusPulse</title>
+    <title>Focus Mode | FocusPulse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
@@ -15,157 +16,188 @@
 
 <body>
 
-    <nav class="navbar">
-        <div class="logo">FocusPulse</div>
-        <div class="nav-links">
-            <a href="{{ url_for('home') }}">Home</a>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('planner') }}">Planner</a>
-            <a href="{{ url_for('focus') }}">Focus Mode</a>
-            <a href="{{ url_for('wellness') }}">Wellness</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-            <button id="themeToggleBtn" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-size: 16px;">🌙</button>
-        </div>
-    </nav>
-
-    <div class="container">
-        <h2>Focus Mode</h2>
-        <p class="subtitle">Start a study session and track distractions automatically.</p>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <ul class="flash-message">
-            {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {% endwith %}
-
-        <div class="focus-layout">
-            <div class="focus-card">
-                <h3>Study Session</h3>
-
-                <label>Select Task</label>
-                <select id="task_title">
-                    <option value="">Choose a task</option>
-                    {% for task in tasks %}
-                    <option value="{{ task['task_title'] }}">{{ task['task_title'] }}</option>
-                    {% endfor %}
-                </select>
-
-                <div class="focus-timer" id="timer">00:00</div>
-
-                <div class="focus-stats">
-                    <div class="focus-stat-box">
-                        <span>Distractions</span>
-                        <strong id="distractionCount">0</strong>
-                    </div>
-                    <div class="focus-stat-box">
-                        <span>Focus Score</span>
-                        <strong id="focusScore">100%</strong>
-                    </div>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="app-sidebar" id="sidebar">
+            <div class="logo">FocusPulse <span style="color:var(--electric-cyan);">.</span></div>
+            <nav class="app-nav">
+                <a href="{{ url_for('home') }}">🏠 Home</a>
+                <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
+                <a href="{{ url_for('planner') }}">📅 Planner</a>
+                <a href="{{ url_for('focus') }}" class="active">⏱️ Focus Mode</a>
+                <a href="{{ url_for('wellness') }}">🧘 Wellness</a>
+                <a href="{{ url_for('statistics') }}">📈 Statistics</a>
+                <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
+            </nav>
+            <div class="app-sidebar-footer">
+                <div style="font-weight:600; font-size:14px;">{{ session.get('user_name', 'Student') }}</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="themeToggleBtn"
+                        style="background:transparent; border:none; cursor:pointer; font-size:18px;">🌙</button>
+                    <a href="{{ url_for('logout') }}"
+                        style="color:var(--core-muted); text-decoration:none; font-size:14px; font-weight:600;">Out</a>
                 </div>
+            </div>
+        </aside>
 
-                <div class="focus-buttons">
-                    <button class="btn btn-primary" onclick="startTimer()">Start</button>
-                    <button class="btn btn-secondary" onclick="pauseTimer()">Pause</button>
-                    <button class="btn btn-secondary" onclick="resumeTimer()">Resume</button>
-                    <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
-                </div>
-
-                <form method="POST" action="{{ url_for('save_focus_session') }}" onsubmit="prepareSessionData()">
-                    <input type="hidden" name="task_title" id="hidden_task_title">
-                    <input type="hidden" name="duration" id="hidden_duration">
-                    <input type="hidden" name="distraction_count" id="hidden_distraction_count">
-                    <input type="hidden" name="focus_score" id="hidden_focus_score">
-
-                    <label>Session Notes</label>
-                    <textarea name="notes" id="notes" rows="4"
-                        placeholder="Write session summary or distractions..."></textarea>
-
-                    <button type="submit" class="btn save-session-btn">Save Session</button>
-                </form>
+        <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <!-- MOBILE HEADER -->
+            <div class="top-bar-mobile">
+                <div class="logo" style="margin:0; font-size:20px; font-weight:700;">FocusPulse</div>
+                <button style="background:transparent; border:none; font-size:24px; cursor:pointer;"
+                    onclick="document.getElementById('sidebar').style.left = document.getElementById('sidebar').style.left === '0px' ? '-100%' : '0px'">☰</button>
             </div>
 
-            <div class="focus-card recent-focus-card">
-                <h3>Recent Focus Sessions</h3>
+            <main class="app-main" style="align-items:center; padding-top:40px;">
 
-                {% if recent_sessions %}
-                <div class="recent-focus-list">
-                    {% for session in recent_sessions %}
-                    <div class="recent-focus-item">
-                        <div class="recent-focus-top" style="display: flex; align-items: center; justify-content: space-between;">
-                            <h4>{{ session["task_title"] or "Untitled Session" }}</h4>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <span class="recent-focus-badge">{{ session["focus_score"] }}%</span>
-                                <a href="{{ url_for('delete_focus_session', session_id=session['id']) }}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this session?');" title="Delete Session" style="padding: 4px 10px; font-size: 14px; border-radius: 8px; text-decoration: none;">&times;</a>
-                            </div>
-                        </div>
-
-                        <div class="recent-focus-meta">
-                            <div class="recent-focus-meta-box">
-                                <span>Duration</span>
-                                <strong>{{ session["duration"] }} min</strong>
-                            </div>
-                            <div class="recent-focus-meta-box">
-                                <span>Distractions</span>
-                                <strong>{{ session["distraction_count"] }}</strong>
-                            </div>
-                            <div class="recent-focus-meta-box">
-                                <span>Focus Score</span>
-                                <strong>{{ session["focus_score"] }}%</strong>
-                            </div>
-                        </div>
-                    </div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <ul class="flash-message" style="width:100%; max-width:600px;">
+                    {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
                     {% endfor %}
-                </div>
-                {% else %}
-                <p>No focus sessions recorded yet.</p>
+                </ul>
                 {% endif %}
-            </div>
+                {% endwith %}
+
+                <h2 style="font-size:32px; font-weight:800; color:var(--core-text);">Focus Session</h2>
+                <p style="color:var(--core-muted); font-size:16px;">Eliminate distractions and hit your flow state.</p>
+
+                <div class="m-card" style="width:100%; max-width:700px; margin-top:20px; text-align:center;">
+
+                    <div style="margin-bottom:24px;">
+                        <select id="task_title"
+                            style="padding:14px; width:100%; max-width:300px; border-radius:12px; border:1px solid var(--core-border); background:var(--core-bg); font-weight:600; color:var(--core-text); font-family:inherit;">
+                            <option value="">Select Task to Focus On</option>
+                            {% for task in tasks %}
+                            <option value="{{ task['task_title'] }}">{{ task['task_title'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- ANIMATED TIMER RING -->
+                    <div class="focus-timer-ring" id="timerRing">
+                        <div class="focus-timer-inner">
+                            <div class="focus-time-large" id="timer">00:00</div>
+                            <div
+                                style="display:flex; justify-content:center; gap:20px; margin-top:16px; color:var(--core-muted); font-weight:600; font-size:13px; text-transform:uppercase;">
+                                <div style="text-align:center;">
+                                    <span
+                                        style="font-size:24px; color:var(--Electric-cyan); display:block; font-weight:800;"
+                                        id="distractionCount">0</span>
+                                    Distractions
+                                </div>
+                                <div style="text-align:center;">
+                                    <span
+                                        style="font-size:24px; color:var(--success-green); display:block; font-weight:800;"
+                                        id="focusScore">100%</span>
+                                    Score
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-top:30px;">
+                        <button class="btn" onclick="startTimer()"
+                            style="background:var(--indigo-primary); padding:16px 40px; font-size:16px; min-width:140px;">Start</button>
+                        <button class="btn" onclick="pauseTimer()"
+                            style="background:var(--core-bg); color:var(--core-text); padding:16px 40px; font-size:16px; min-width:140px; border:1px solid var(--core-border);">Pause</button>
+                        <button class="btn" onclick="resetTimer()"
+                            style="background:transparent; color:var(--streak-red); border:1px solid rgba(239, 68, 68, 0.4); padding:16px 40px; font-size:16px;">Reset</button>
+                    </div>
+
+                    <!-- SAVE SESSION -->
+                    <form method="POST" action="{{ url_for('save_focus_session') }}" onsubmit="prepareSessionData()"
+                        style="margin-top:30px; border-top:1px solid var(--core-border); padding-top:24px;">
+                        <input type="hidden" name="task_title" id="hidden_task_title">
+                        <input type="hidden" name="duration" id="hidden_duration">
+                        <input type="hidden" name="distraction_count" id="hidden_distraction_count">
+                        <input type="hidden" name="focus_score" id="hidden_focus_score">
+
+                        <input type="text" name="notes" id="notes" placeholder="Quick notes (optional)"
+                            style="width:100%; max-width:400px; padding:14px; border-radius:12px; border:1px solid var(--core-border); background:var(--core-bg); color:var(--core-text);">
+
+                        <button type="submit" class="btn"
+                            style="background:var(--success-green); padding:14px 24px;">Save & Log Session</button>
+                    </form>
+                </div>
+
+                <p style="text-align:center; padding:30px; color:var(--core-muted); max-width:500px; line-height:1.6;">
+                    "Deep work is the ability to focus without distraction on a cognitively demanding task." — Cal
+                    Newport
+                </p>
+
+            </main>
         </div>
     </div>
 
     <script>
         let timer;
-        let seconds = localStorage.getItem("focus_seconds")
-            ? parseInt(localStorage.getItem("focus_seconds"))
-            : 0;
-
+        let pSeconds = parseInt(localStorage.getItem("focus_seconds"));
+        let seconds = isNaN(pSeconds) ? 0 : pSeconds;
+        
         let running = localStorage.getItem("focus_running") === "true";
-        let distractionCount = localStorage.getItem("focus_distractionCount")
-            ? parseInt(localStorage.getItem("focus_distractionCount"))
-            : 0;
-
+        
+        let pDist = parseInt(localStorage.getItem("focus_distractionCount"));
+        let distractionCount = isNaN(pDist) ? 0 : pDist;
+        
         let selectedTask = localStorage.getItem("focus_task_title") || "";
         let hiddenTimeout = null;
 
         function saveFocusState() {
-            localStorage.setItem("focus_seconds", seconds);
+            localStorage.setItem("focus_seconds", isNaN(seconds) ? 0 : seconds);
             localStorage.setItem("focus_running", running);
-            localStorage.setItem("focus_distractionCount", distractionCount);
-            localStorage.setItem("focus_task_title", document.getElementById("task_title").value);
+            localStorage.setItem("focus_distractionCount", isNaN(distractionCount) ? 0 : distractionCount);
+            localStorage.setItem("focus_task_title", document.getElementById("task_title").value || "");
         }
 
         function calculateFocusScore() {
-            let penalty = distractionCount * 10;
+            let penalty = distractionCount * 5; // Reduced penalty for gamified feeling
             return Math.max(0, 100 - penalty);
         }
 
         function updateTimerDisplay() {
+            if (isNaN(seconds)) seconds = 0;
+            if (isNaN(distractionCount)) distractionCount = 0;
+            
             let mins = String(Math.floor(seconds / 60)).padStart(2, "0");
             let secs = String(seconds % 60).padStart(2, "0");
-            document.getElementById("timer").innerText = `${mins}:${secs}`;
-            document.getElementById("distractionCount").innerText = distractionCount;
-            document.getElementById("focusScore").innerText = calculateFocusScore() + "%";
+            
+            let timerEl = document.getElementById("timer");
+            if (timerEl) {
+                timerEl.innerText = `${mins}:${secs}`;
+            }
+            
+            let distEl = document.getElementById("distractionCount");
+            if (distEl) {
+                distEl.innerText = distractionCount;
+            }
+            
+            let score = calculateFocusScore();
+            let scoreEl = document.getElementById("focusScore");
+            if (scoreEl) {
+                scoreEl.innerText = score + "%";
+            }
+
+            // Progress ring visually pulses based on score (100% full, drops per distraction)
+            let ringEl = document.getElementById("timerRing");
+            if (ringEl) {
+                ringEl.style.setProperty('--progress', `${score}%`);
+                if (running) {
+                    ringEl.classList.add("is-running");
+                } else {
+                    ringEl.classList.remove("is-running");
+                }
+            }
         }
 
         function startTimer() {
+            if (isNaN(seconds)) seconds = 0;
             if (!running) {
                 running = true;
                 saveFocusState();
-
+                let ringEl = document.getElementById("timerRing");
+                if (ringEl) ringEl.classList.add("is-running");
                 timer = setInterval(() => {
                     seconds++;
                     updateTimerDisplay();
@@ -177,42 +209,29 @@
         function pauseTimer() {
             running = false;
             clearInterval(timer);
+            let ringEl = document.getElementById("timerRing");
+            if (ringEl) ringEl.classList.remove("is-running");
             saveFocusState();
-        }
-
-        function resumeTimer() {
-            if (!running) {
-                running = true;
-                saveFocusState();
-
-                timer = setInterval(() => {
-                    seconds++;
-                    updateTimerDisplay();
-                    saveFocusState();
-                }, 1000);
-            }
         }
 
         function resetTimer() {
             running = false;
             clearInterval(timer);
             clearTimeout(hiddenTimeout);
-
+            let ringEl = document.getElementById("timerRing");
+            if (ringEl) ringEl.classList.remove("is-running");
             seconds = 0;
             distractionCount = 0;
-
             localStorage.removeItem("focus_seconds");
             localStorage.removeItem("focus_running");
             localStorage.removeItem("focus_distractionCount");
             localStorage.removeItem("focus_task_title");
-
             document.getElementById("task_title").value = "";
             updateTimerDisplay();
         }
 
         document.addEventListener("visibilitychange", function () {
             if (!running) return;
-
             if (document.hidden) {
                 hiddenTimeout = setTimeout(() => {
                     distractionCount++;
@@ -225,17 +244,10 @@
         });
 
         function prepareSessionData() {
-            document.getElementById("hidden_task_title").value =
-                document.getElementById("task_title").value;
-
-            document.getElementById("hidden_duration").value =
-                Math.floor(seconds / 60);
-
-            document.getElementById("hidden_distraction_count").value =
-                distractionCount;
-
-            document.getElementById("hidden_focus_score").value =
-                calculateFocusScore();
+            document.getElementById("hidden_task_title").value = document.getElementById("task_title").value;
+            document.getElementById("hidden_duration").value = Math.floor(seconds / 60);
+            document.getElementById("hidden_distraction_count").value = distractionCount;
+            document.getElementById("hidden_focus_score").value = calculateFocusScore();
 
             localStorage.removeItem("focus_seconds");
             localStorage.removeItem("focus_running");
@@ -243,15 +255,14 @@
             localStorage.removeItem("focus_task_title");
         }
 
-        document.getElementById("task_title").addEventListener("change", saveFocusState);
+        let taskTitleEl = document.getElementById("task_title");
+        if (taskTitleEl) {
+            taskTitleEl.addEventListener("change", saveFocusState);
+        }
 
         window.onload = function () {
-            if (selectedTask) {
-                document.getElementById("task_title").value = selectedTask;
-            }
-
+            if (selectedTask && taskTitleEl) taskTitleEl.value = selectedTask;
             updateTimerDisplay();
-
             if (running) {
                 timer = setInterval(() => {
                     seconds++;
@@ -261,7 +272,6 @@
             }
         };
     </script>
-
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
 </body>
 

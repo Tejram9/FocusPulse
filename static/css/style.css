@@ -47,7 +47,7 @@
     background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.15), transparent 28%), radial-gradient(circle at top right, rgba(37, 99, 235, 0.15), transparent 28%), var(--bg);
 }
 
-[data-theme="dark"] .home-card, 
+[data-theme="dark"] .home-card,
 [data-theme="dark"] .planner-form-card,
 [data-theme="dark"] .planner-task-card,
 [data-theme="dark"] .stat-card,
@@ -61,8 +61,8 @@
     border-bottom: 1px solid var(--border);
 }
 
-[data-theme="dark"] input, 
-[data-theme="dark"] select, 
+[data-theme="dark"] input,
+[data-theme="dark"] select,
 [data-theme="dark"] textarea {
     background: var(--surface-soft);
     color: var(--text);
@@ -415,8 +415,15 @@ select:focus {
 }
 
 @keyframes flamePulse {
-    0%, 100% { transform: scale(1) rotate(-3deg); }
-    50%       { transform: scale(1.18) rotate(3deg); }
+
+    0%,
+    100% {
+        transform: scale(1) rotate(-3deg);
+    }
+
+    50% {
+        transform: scale(1.18) rotate(3deg);
+    }
 }
 
 [data-theme="dark"] .streak-badge {
@@ -515,6 +522,7 @@ select:focus {
         opacity: 0;
         transform: translateY(-14px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -522,13 +530,25 @@ select:focus {
 }
 
 @keyframes shimmer {
-    0%   { background-position: 0% 0%; }
-    100% { background-position: 200% 0%; }
+    0% {
+        background-position: 0% 0%;
+    }
+
+    100% {
+        background-position: 200% 0%;
+    }
 }
 
 @keyframes iconGlow {
-    0%, 100% { filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.5)); }
-    50%       { filter: drop-shadow(0 0 16px rgba(167, 139, 250, 0.9)); }
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.5));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 16px rgba(167, 139, 250, 0.9));
+    }
 }
 
 [data-theme="dark"] .motivation-widget {
@@ -1960,6 +1980,7 @@ select:focus {
 }
 
 @media (max-width: 768px) {
+
     .calendar-card,
     .calendar-task-box {
         padding: 20px;
@@ -1977,7 +1998,8 @@ select:focus {
 
 .calendar-app-layout {
     display: flex;
-    height: calc(100vh - 80px); /* Fill screen below navbar */
+    height: calc(100vh - 80px);
+    /* Fill screen below navbar */
     overflow: hidden;
 }
 
@@ -2047,7 +2069,7 @@ select:focus {
 
 .sidebar-task-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-task-item .task-info {
@@ -2061,7 +2083,8 @@ select:focus {
     color: var(--text);
 }
 
-.sidebar-task-item small, .sidebar-task-item .time-badge {
+.sidebar-task-item small,
+.sidebar-task-item .time-badge {
     font-size: 12px;
     color: var(--muted);
 }
@@ -2139,7 +2162,7 @@ select:focus {
     box-shadow: 0 8px 18px rgba(79, 70, 229, 0.32) !important;
 }
 
-.fc-button-primary:not(:disabled):active, 
+.fc-button-primary:not(:disabled):active,
 .fc-button-active {
     background: var(--indigo-dark) !important;
     color: white !important;
@@ -2231,20 +2254,20 @@ select:focus {
     border-radius: 9px !important;
     padding: 6px 10px !important;
     border: none !important;
-    border-left: 5px solid rgba(0,0,0,0.22) !important;
+    border-left: 5px solid rgba(0, 0, 0, 0.22) !important;
     cursor: pointer !important;
     margin: 3px 3px !important;
     font-size: 13px !important;
     font-weight: 700 !important;
     color: white !important;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15) !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     letter-spacing: 0.1px;
 }
 
 .fc-event:hover {
     transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.22) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22) !important;
     z-index: 10 !important;
 }
 
@@ -2286,7 +2309,7 @@ select:focus {
     max-width: 500px;
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     transform: translateY(20px);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2338,7 +2361,9 @@ select:focus {
     gap: 16px;
 }
 
-.modal-card input, .modal-card textarea, .modal-card select {
+.modal-card input,
+.modal-card textarea,
+.modal-card select {
     width: 100%;
     padding: 12px;
     border-radius: 10px;
@@ -2355,7 +2380,9 @@ select:focus {
     min-height: 80px;
 }
 
-.modal-card input:focus, .modal-card textarea:focus, .modal-card select:focus {
+.modal-card input:focus,
+.modal-card textarea:focus,
+.modal-card select:focus {
     border-color: var(--primary);
     background: white;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -2415,7 +2442,7 @@ select:focus {
     align-items: center;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .streak-details h3 {
@@ -2430,7 +2457,7 @@ select:focus {
     margin: 0;
     font-size: 15px;
     opacity: 0.9;
-    color: rgba(255,255,255,0.9) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .streak-details .motivational-text {

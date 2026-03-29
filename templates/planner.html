@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner - FocusPulse</title>
+    <title>Planner | FocusPulse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
     <script>
         if (localStorage.getItem('theme') === 'dark') {
@@ -14,84 +15,116 @@
     </script>
 </head>
 
-<body class="bg-gray-50">
+<body>
 
-    <nav class="navbar">
-        <div class="logo">FocusPulse</div>
-        <div class="nav-links">
-            <a href="{{ url_for('home') }}">Home</a>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('planner') }}">Planner</a>
-            <a href="{{ url_for('focus') }}">Focus Mode</a>
-            <a href="{{ url_for('wellness') }}">Wellness</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-            <button id="themeToggleBtn" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-size: 16px;">🌙</button>
-        </div>
-    </nav>
-
-    <div class="calendar-app-layout">
-        <!-- Sidebar -->
-        <aside class="calendar-sidebar">
-            <button class="btn create-task-btn" id="openTaskModalBtn">+ Create Task</button>
-            <div class="sidebar-section">
-                <h3>Today's Tasks</h3>
-                <ul id="sidebar-today-list" class="sidebar-task-list"></ul>
-            </div>
-            <div class="sidebar-section">
-                <h3>Upcoming</h3>
-                <ul id="sidebar-upcoming-list" class="sidebar-task-list"></ul>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="app-sidebar" id="sidebar">
+            <div class="logo">FocusPulse <span style="color:var(--electric-cyan);">.</span></div>
+            <nav class="app-nav">
+                <a href="{{ url_for('home') }}">🏠 Home</a>
+                <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
+                <a href="{{ url_for('planner') }}" class="active">📅 Planner</a>
+                <a href="{{ url_for('focus') }}">⏱️ Focus Mode</a>
+                <a href="{{ url_for('wellness') }}">🧘 Wellness</a>
+                <a href="{{ url_for('statistics') }}">📈 Statistics</a>
+                <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
+            </nav>
+            <div class="app-sidebar-footer">
+                <div style="font-weight:600; font-size:14px;">{{ session.get('user_name', 'Student') }}</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="themeToggleBtn"
+                        style="background:transparent; border:none; cursor:pointer; font-size:18px;">🌙</button>
+                    <a href="{{ url_for('logout') }}"
+                        style="color:var(--core-muted); text-decoration:none; font-size:14px; font-weight:600;">Out</a>
+                </div>
             </div>
         </aside>
 
-        <!-- Main Calendar Area -->
-        <main class="calendar-main">
-            <div id="calendar" class="fc-custom-theme"></div>
-        </main>
+        <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <!-- MOBILE HEADER -->
+            <div class="top-bar-mobile">
+                <div class="logo" style="margin:0; font-size:20px; font-weight:700;">FocusPulse</div>
+                <button style="background:transparent; border:none; font-size:24px; cursor:pointer;"
+                    onclick="document.getElementById('sidebar').style.left = document.getElementById('sidebar').style.left === '0px' ? '-100%' : '0px'">☰</button>
+            </div>
+
+            <!-- MAIN PLANNER WRAPPER -->
+            <div class="calendar-app-layout" style="flex:1;">
+
+                <!-- Secondary Task Sidebar -->
+                <aside class="calendar-sidebar"
+                    style="background:var(--core-surface); border-right:1px solid var(--core-border);">
+                    <button class="btn create-task-btn" id="openTaskModalBtn"
+                        style="background:var(--indigo-primary); font-family:inherit;">+ Create Task</button>
+                    <div class="sidebar-section">
+                        <h3 style="color:var(--core-text); font-weight:700; font-family:inherit;">Today's Tasks</h3>
+                        <ul id="sidebar-today-list" class="sidebar-task-list"></ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <h3 style="color:var(--core-text); font-weight:700; font-family:inherit;">Upcoming</h3>
+                        <ul id="sidebar-upcoming-list" class="sidebar-task-list"></ul>
+                    </div>
+                </aside>
+
+                <!-- Main Calendar Area -->
+                <main class="calendar-main" style="background:var(--core-bg);">
+                    <div id="calendar" class="fc-custom-theme"></div>
+                </main>
+            </div>
+        </div>
     </div>
 
     <!-- Task Modal -->
     <div id="taskModal" class="modal-overlay">
-        <div class="modal-card">
+        <div class="modal-card" style="background:var(--core-surface); color:var(--core-text);">
             <div class="modal-header">
-                <h3 id="modalTitle">New Task</h3>
+                <h3 id="modalTitle" style="font-family:inherit; font-weight:700;">New Task</h3>
                 <button class="close-btn" id="closeTaskModalBtn">&times;</button>
             </div>
             <form id="taskForm">
                 <input type="hidden" id="taskId">
                 <div class="form-group">
-                    <input type="text" id="taskTitleInput" placeholder="Task Title" required>
+                    <input type="text" id="taskTitleInput" placeholder="Task Title" required
+                        style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);">
                 </div>
                 <div class="form-group">
-                    <textarea id="taskDescInput" placeholder="Description..."></textarea>
+                    <textarea id="taskDescInput" placeholder="Description..."
+                        style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);"></textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="taskDateInput" required>
+                        <label style="color:var(--core-text);">Date</label>
+                        <input type="date" id="taskDateInput" required
+                            style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Start Time</label>
-                        <input type="time" id="taskStartTimeInput">
+                        <label style="color:var(--core-text);">Start Time</label>
+                        <input type="time" id="taskStartTimeInput"
+                            style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);">
                     </div>
                     <div class="form-group">
-                        <label>End Time</label>
-                        <input type="time" id="taskEndTimeInput">
+                        <label style="color:var(--core-text);">End Time</label>
+                        <input type="time" id="taskEndTimeInput"
+                            style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Priority</label>
-                        <select id="taskPriorityInput">
+                        <label style="color:var(--core-text);">Priority</label>
+                        <select id="taskPriorityInput"
+                            style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);">
                             <option value="High">High</option>
                             <option value="Medium" selected>Medium</option>
                             <option value="Low">Low</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Category</label>
-                        <select id="taskCategoryInput">
+                        <label style="color:var(--core-text);">Category</label>
+                        <select id="taskCategoryInput"
+                            style="background:var(--core-bg); color:var(--core-text); border:1px solid var(--core-border);">
                             <option value="Study">Study</option>
                             <option value="Exam">Exam</option>
                             <option value="Assignment">Assignment</option>
@@ -101,17 +134,21 @@
                 </div>
                 <div class="form-row" style="align-items: center; justify-content: space-between;">
                     <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-                        <label style="margin:0;">Color</label>
-                        <input type="color" id="taskColorInput" value="#4F46E5" style="padding:0; width:40px; height:30px; border:none; border-radius:4px; cursor:pointer;">
+                        <label style="margin:0; color:var(--core-text);">Color</label>
+                        <input type="color" id="taskColorInput" value="#4F46E5"
+                            style="padding:0; width:40px; height:40px; border:1px solid var(--core-border); border-radius:8px; cursor:pointer; background:var(--core-bg);">
                     </div>
                     <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="taskCompleteInput" style="width: auto;">
-                        <label for="taskCompleteInput" style="margin: 0;">Completed</label>
+                        <input type="checkbox" id="taskCompleteInput"
+                            style="width: 20px; height:20px; accent-color:var(--indigo-primary);">
+                        <label for="taskCompleteInput" style="margin: 0; color:var(--core-text);">Completed</label>
                     </div>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary delete-btn" id="deleteTaskBtn" style="display:none; color: white;">Delete</button>
-                    <button type="submit" class="btn btn-primary">Save Task</button>
+                <div class="modal-actions" style="border-top:1px solid var(--core-border);">
+                    <button type="button" class="btn btn-secondary delete-btn" id="deleteTaskBtn"
+                        style="display:none; color: white;">Delete</button>
+                    <button type="submit" class="btn btn-primary" style="background:var(--indigo-primary);">Save
+                        Task</button>
                 </div>
             </form>
         </div>

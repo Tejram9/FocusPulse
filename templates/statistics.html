@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics | FocusPulse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="app-sidebar" id="sidebar">
+            <div class="logo">FocusPulse <span style="color:var(--electric-cyan);">.</span></div>
+            <nav class="app-nav">
+                <a href="{{ url_for('home') }}">🏠 Home</a>
+                <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
+                <a href="{{ url_for('planner') }}">📅 Planner</a>
+                <a href="{{ url_for('focus') }}">⏱️ Focus Mode</a>
+                <a href="{{ url_for('wellness') }}">🧘 Wellness</a>
+                <a href="{{ url_for('statistics') }}" class="active">📈 Statistics</a>
+                <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
+            </nav>
+            <div class="app-sidebar-footer">
+                <div style="font-weight:600; font-size:14px;">{{ session.get('user_name', 'Student') }}</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="themeToggleBtn"
+                        style="background:transparent; border:none; cursor:pointer; font-size:18px;">🌙</button>
+                    <a href="{{ url_for('logout') }}"
+                        style="color:var(--core-muted); text-decoration:none; font-size:14px; font-weight:600;">Out</a>
+                </div>
+            </div>
+        </aside>
+
+        <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <!-- MOBILE HEADER -->
+            <div class="top-bar-mobile">
+                <div class="logo" style="margin:0; font-size:20px; font-weight:700;">FocusPulse</div>
+                <button style="background:transparent; border:none; font-size:24px; cursor:pointer;"
+                    onclick="document.getElementById('sidebar').style.left = document.getElementById('sidebar').style.left === '0px' ? '-100%' : '0px'">☰</button>
+            </div>
+
+            <main class="app-main">
+                <div style="margin-bottom: 30px;">
+                    <h2 style="font-size:32px; font-weight:800; margin-bottom:8px; color:var(--core-text);">Statistics &
+                        Analytics</h2>
+                    <p style="color:var(--core-muted); font-size:16px;">Deep insights into your learning patterns and
+                        focus routines.</p>
+                </div>
+
+                <div
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:24px; margin-bottom:24px;">
+                    <!-- FOCUS HISTORY CHART -->
+                    <div class="m-card">
+                        <h3 style="margin-top:0; font-size:18px;">Weekly Study Hours</h3>
+                        <div style="width:100%; height:260px;">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- OVERVIEW STATS -->
+                    <div class="m-card" style="display:flex; flex-direction:column; justify-content:space-around;">
+                        <div style="text-align:center;">
+                            <span
+                                style="font-size:48px; font-weight:800; color:var(--indigo-primary); font-family:'Poppins', sans-serif;">{{
+                                current_streak }}</span>
+                            <p
+                                style="margin:0; color:var(--core-muted); font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:0.5px;">
+                                Current Fire Streak</p>
+                        </div>
+                        <div
+                            style="display:flex; justify-content:space-around; border-top:1px solid var(--core-border); padding-top:20px; align-items:center;">
+                            <div style="text-align:center;">
+                                <span style="font-size:24px; font-weight:800; color:var(--core-text);">{{ best_streak
+                                    }}</span>
+                                <p
+                                    style="margin:0; color:var(--core-muted); font-size:12px; font-weight:600; text-transform:uppercase;">
+                                    Best Streak</p>
+                            </div>
+                            <div style="height:40px; width:1px; background:var(--core-border);"></div>
+                            <div style="text-align:center;">
+                                <span style="font-size:24px; font-weight:800; color:var(--core-text);">{{
+                                    completed_tasks }}</span>
+                                <p
+                                    style="margin:0; color:var(--core-muted); font-size:12px; font-weight:600; text-transform:uppercase;">
+                                    Tasks Done</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="m-card" style="padding:0; overflow:hidden;">
+                    <div style="padding:24px; border-bottom:1px solid var(--core-border);">
+                        <h3 style="margin:0; font-size:18px;">Recent Focus History</h3>
+                    </div>
+                    {% if recent_sessions %}
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <thead>
+                            <tr
+                                style="background:var(--core-bg); color:var(--core-muted); font-size:13px; text-transform:uppercase;">
+                                <th style="padding:14px 24px; font-weight:600;">Date</th>
+                                <th style="padding:14px 24px; font-weight:600;">Task</th>
+                                <th style="padding:14px 24px; font-weight:600;">Duration</th>
+                                <th style="padding:14px 24px; font-weight:600;">Distractions</th>
+                                <th style="padding:14px 24px; font-weight:600;">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in recent_sessions %}
+                            <tr style="border-bottom:1px solid var(--core-border);">
+                                <td
+                                    style="padding:16px 24px; color:var(--core-muted); font-weight:600; font-size:14px;">
+                                    {{ session["date"] }}</td>
+                                <td style="padding:16px 24px; font-weight:600; color:var(--core-text);">{{
+                                    session["task_title"] or "Uncategorized" }}</td>
+                                <td style="padding:16px 24px; color:var(--core-text); font-weight:600;">{{
+                                    session["duration"] }}m</td>
+                                <td style="padding:16px 24px; color:var(--core-muted); font-weight:600;">{{
+                                    session["distraction_count"] }}</td>
+                                <td style="padding:16px 24px;">
+                                    <span
+                                        style="background:rgba(16, 185, 129, 0.1); color:var(--success-green); padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700;">{{
+                                        session["focus_score"] }}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div style="padding:40px 24px; text-align:center; color:var(--core-muted);">No focus sessions
+                        recorded yet.</div>
+                    {% endif %}
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const gridColor = isDark ? '#1f2937' : '#e2e8f0';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Focus Minutes',
+                    data: [45, 90, 30, 120, 60, 0, 150], // Dummy aesthetic data
+                    backgroundColor: '#4338ca',
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'Inter', weight: 600 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor, font: { family: 'Inter', weight: 600 } }
+                    }
+                }
+            }
+        });
+
+        // Watch for theme changes to update chart (basic implementation)
+        document.getElementById('themeToggleBtn').addEventListener('click', () => {
+            setTimeout(() => location.reload(), 100);
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</body>
+
+</html>

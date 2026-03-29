@@ -1,55 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocusPulse | Login</title>
+    <title>Login | FocusPulse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
     </script>
 </head>
-<body>
-    <div style="position: absolute; top: 20px; right: 20px;">
-        <button id="themeToggleBtnOut" class="btn btn-secondary theme-btn" title="Toggle Theme" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">🌙</button>
+
+<body style="background:var(--core-bg);">
+
+    <div style="position: absolute; top: 20px; right: 20px; z-index:100;">
+        <button id="themeToggleBtnOut" class="btn btn-secondary theme-btn" title="Toggle Theme"
+            style="padding: 10px; border-radius: 50%; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; border:1px solid var(--core-border); background:var(--core-surface); color:var(--core-text);">🌙</button>
     </div>
 
+    <div class="auth-wrapper">
+        <div class="auth-card">
 
-<div class="main-wrapper">
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 class="logo" style="margin:0; font-size:32px; font-weight:800; color:var(--indigo-primary);">
+                    FocusPulse<span style="color:var(--electric-cyan);">.</span></h1>
+                <p style="color:var(--core-muted); font-size:15px; margin-top:8px;">Welcome back. Dive into deep work.
+                </p>
+            </div>
 
-    <div class="hero-card">
-
-        <h2 class="logo">FocusPulse</h2>
-        <p class="tagline">Login to access your dashboard</p>
-
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul class="flash-message">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <ul class="flash-message" style="width:100%; text-align:left; padding:0; list-style:none;">
                 {% for msg in messages %}
-                    <li>{{ msg }}</li>
+                <li
+                    style="background:rgba(239, 68, 68, 0.1); color:var(--streak-red); padding:12px; border-radius:8px; margin-bottom:16px; font-size:14px; font-weight:600;">
+                    {{ msg }}</li>
                 {% endfor %}
             </ul>
-        {% endif %}
-        {% endwith %}
+            {% endif %}
+            {% endwith %}
 
-        <form method="POST" action="/login" class="form-card">
-            <input type="text" name="username" placeholder="Username or Email" required>
-            <input type="password" name="password" placeholder="Password" required>
+            <form method="POST" action="/login" style="display:flex; flex-direction:column; gap:16px; text-align:left;">
+                <div class="form-group" style="margin:0;">
+                    <label
+                        style="color:var(--core-text); font-weight:700; font-size:13px; text-transform:uppercase;">Username
+                        or Email</label>
+                    <input type="text" name="username" placeholder="john@example.com" required
+                        style="width:100%; padding:14px; border-radius:12px; border:1px solid var(--core-border); background:var(--core-bg); color:var(--core-text);">
+                </div>
 
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
+                <div class="form-group" style="margin:0;">
+                    <label
+                        style="color:var(--core-text); font-weight:700; font-size:13px; text-transform:uppercase;">Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required
+                        style="width:100%; padding:14px; border-radius:12px; border:1px solid var(--core-border); background:var(--core-bg); color:var(--core-text);">
+                </div>
 
-        <p style="margin-top:15px;">
-            Don't have an account? <a href="/signup">Sign up here</a>
-        </p>
+                <button type="submit" class="btn"
+                    style="background:linear-gradient(135deg, var(--indigo-primary), var(--indigo-light)); color:white; padding:16px; border-radius:12px; font-weight:700; font-size:15px; margin-top:10px; border:none; cursor:pointer;">Sign
+                    In to Workspace</button>
+            </form>
 
+            <p style="margin-top:24px; color:var(--core-muted); font-size:14px;">
+                Don't have an account? <a href="/signup"
+                    style="color:var(--indigo-primary); font-weight:700; text-decoration:none;">Sign up globally</a>
+            </p>
+
+        </div>
     </div>
 
-</div>
-
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
 </body>
+
 </html>

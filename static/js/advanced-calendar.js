@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const calendarEl = document.getElementById('calendar');
     const taskModal = document.getElementById('taskModal');
     const taskForm = document.getElementById('taskForm');
@@ -18,11 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
         selectable: true,
         selectMirror: true,
         dayMaxEvents: true,
-        events: async function(info, successCallback, failureCallback) {
+        events: async function (info, successCallback, failureCallback) {
             try {
                 const response = await fetch('/api/tasks');
                 const tasks = await response.json();
-                
+
                 const events = tasks.map(t => {
                     let start = t.date;
                     if (t.start_time) {
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         extendedProps: { ...t }
                     };
                 });
-                
+
                 successCallback(events);
                 updateSidebar(tasks);
             } catch (err) {
@@ -52,16 +52,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 failureCallback(err);
             }
         },
-        select: function(info) {
+        select: function (info) {
             openModal({ date: info.startStr.split('T')[0] });
         },
-        eventClick: function(info) {
+        eventClick: function (info) {
             openModal(info.event.extendedProps);
         },
-        eventDrop: async function(info) {
+        eventDrop: async function (info) {
             await updateTaskDates(info.event);
         },
-        eventResize: async function(info) {
+        eventResize: async function (info) {
             await updateTaskDates(info.event);
         }
     });
@@ -72,10 +72,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('taskId').value = task.id || '';
         document.getElementById('taskTitleInput').value = task.title || '';
         document.getElementById('taskDescInput').value = task.description || '';
-        
+
         let initialDate = task.date || '';
         document.getElementById('taskDateInput').value = initialDate;
-        
+
         document.getElementById('taskStartTimeInput').value = task.start_time || '';
         document.getElementById('taskEndTimeInput').value = task.end_time || '';
         document.getElementById('taskPriorityInput').value = task.priority || 'Medium';
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('modalTitle').innerText = task.id ? 'Edit Task' : 'New Task';
         deleteTaskBtn.style.display = task.id ? 'block' : 'none';
-        
+
         // Soft animated entrance
         taskModal.style.display = 'flex';
         setTimeout(() => taskModal.classList.add('show'), 10);
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Modal Events
     openTaskModalBtn.addEventListener('click', () => openModal());
     closeTaskModalBtn.addEventListener('click', closeModal);
-    
+
     taskModal.addEventListener('click', (e) => {
         if (e.target === taskModal) closeModal();
     });
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             closeModal();
             calendar.refetchEvents();
-        } catch(e) {
+        } catch (e) {
             console.error(e);
         }
     });
@@ -152,12 +152,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = event.extendedProps.id;
         // Parse dates from FullCalendar event object
         const newDate = event.startStr.split('T')[0];
-        
+
         let newStartTime = '';
         if (event.startStr.includes('T')) {
-            newStartTime = event.startStr.split('T')[1].substring(0, 5); 
+            newStartTime = event.startStr.split('T')[1].substring(0, 5);
         }
-        
+
         let newEndTime = '';
         if (event.endStr && event.endStr.includes('T')) {
             newEndTime = event.endStr.split('T')[1].substring(0, 5);
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        
+
         calendar.refetchEvents();
     }
 
@@ -186,13 +186,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const m = String(today.getMonth() + 1).padStart(2, '0');
         const d = String(today.getDate()).padStart(2, '0');
         const todayStr = `${y}-${m}-${d}`;
-        
+
         const todayTasks = tasks.filter(t => t.date === todayStr);
-        const upcomingTasks = tasks.filter(t => t.date > todayStr).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 5);
-        
+        const upcomingTasks = tasks.filter(t => t.date > todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+
         const todayList = document.getElementById('sidebar-today-list');
         todayList.innerHTML = '';
-        if(todayTasks.length === 0) {
+        if (todayTasks.length === 0) {
             todayList.innerHTML = '<li class="empty-list">No tasks for today</li>';
         } else {
             todayTasks.forEach(t => {
@@ -207,10 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </li>`;
             });
         }
-        
+
         const upcomingList = document.getElementById('sidebar-upcoming-list');
         upcomingList.innerHTML = '';
-        if(upcomingTasks.length === 0) {
+        if (upcomingTasks.length === 0) {
             upcomingList.innerHTML = '<li class="empty-list">No upcoming tasks</li>';
         } else {
             upcomingTasks.forEach(t => {
