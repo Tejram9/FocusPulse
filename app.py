@@ -342,6 +342,8 @@ def dashboard():
     pending_tasks = 0
     in_progress_tasks = 0
     recent_tasks = []
+    focus_minutes_today = 0
+    distractions_today = 0
 
     try:
         total_tasks = conn.execute(
@@ -375,7 +377,24 @@ def dashboard():
         ).fetchall()
     except Exception as e:
         print(f"Error fetching dashboard tasks: {e}")
-        pass
+
+    # Fetch today's focus session totals for the reminder engine seed
+    try:
+        today_str = date.today().isoformat()
+        today_row = conn.execute(
+            """
+            SELECT COALESCE(SUM(duration), 0) AS total_min,
+                   COALESCE(SUM(distraction_count), 0) AS total_dist
+            FROM focus_sessions
+            WHERE user_id = ?
+              AND DATE(created_at) = ?
+            """,
+            (user_id, today_str)
+        ).fetchone()
+        focus_minutes_today = int(today_row["total_min"]) if today_row else 0
+        distractions_today  = int(today_row["total_dist"]) if today_row else 0
+    except Exception as e:
+        print(f"Error fetching today focus data: {e}")
 
     conn.close()
 
@@ -386,6 +405,7 @@ def dashboard():
         productivity_score = round((completed_tasks / total_tasks) * 100)
 
     daily_quote = get_daily_quote()
+    tasks_remaining = total_tasks - completed_tasks
 
     return render_template(
         "dashboard.html",
@@ -397,7 +417,10 @@ def dashboard():
         recent_tasks=recent_tasks,
         current_streak=streak_info["current_streak"],
         best_streak=streak_info["best_streak"],
-        daily_quote=daily_quote
+        daily_quote=daily_quote,
+        focus_minutes_today=focus_minutes_today,
+        distractions_today=distractions_today,
+        tasks_remaining=tasks_remaining,
     )
 
 

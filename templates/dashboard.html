@@ -92,6 +92,55 @@
                     </div>
                 </div>
 
+                <!-- ═══════════════════════════════════════════════════
+                     DAILY REMINDER CONFIGURATION
+                ════════════════════════════════════════════════════ -->
+                <div class="reminder-card" id="daily-reminder-card">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                        <span style="font-size:24px;">🔔</span>
+                        <h3 style="margin:0; font-size:20px; font-weight:800; color:var(--core-text);">Daily Reminder</h3>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr; gap:16px; max-width:400px; margin-bottom:20px;">
+                        <!-- Select Time -->
+                        <div>
+                            <label for="reminderTime" style="display:block; font-size:12px; font-weight:700; color:var(--core-muted); text-transform:uppercase; margin-bottom:6px;">Select Time</label>
+                            <input type="time" id="reminderTime" class="fp-time-input" style="width:100%; box-sizing:border-box;">
+                        </div>
+
+                        <!-- Enable Toggle -->
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <label class="fp-toggle-label" for="reminderEnabled">
+                                <span class="fp-toggle-switch">
+                                    <input type="checkbox" id="reminderEnabled">
+                                    <span class="fp-toggle-slider"></span>
+                                </span>
+                                Enable Reminder
+                            </label>
+                        </div>
+
+                        <!-- Save Button -->
+                        <button id="saveReminderBtn" onclick="saveReminder()" class="fp-save-btn">
+                            💾 Save Reminder
+                        </button>
+                    </div>
+
+                    <!-- Next Reminder Display -->
+                    <div style="border-top:1px solid var(--core-border); padding-top:16px;">
+                        <span style="font-size:14px; font-weight:600; color:var(--core-muted);">
+                            Next Reminder: <strong id="fp-next-reminder-label" style="color:var(--indigo-primary);">Not set</strong>
+                        </span>
+                        <div id="fp-save-confirm" style="display:none; color:var(--success-green); font-size:12px; font-weight:700; margin-top:8px;">
+                            ✅ Saved Successfully!
+                        </div>
+                    </div>
+
+                    <!-- Notification Permission (Helper) -->
+                    <div style="margin-top:16px;">
+                        <button id="fp-reminder-perm-btn" class="fp-perm-btn" style="padding: 6px 12px; font-size:11px;">🔔 Enable Browser Notifications</button>
+                    </div>
+                </div>
+
                 <div
                     style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:20px; margin-bottom:32px;">
                     <div class="m-card" style="padding:22px;">
@@ -197,6 +246,15 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/reminderEngine.js') }}"></script>
+    <script>
+        // Seed the reminder engine with server-provided today's data
+        ReminderEngine.init({
+            focusMinutesToday: {{ focus_minutes_today | int }},
+            distractionsToday:  {{ distractions_today | int }},
+            tasksRemaining:     {{ tasks_remaining | int }}
+        });
+    </script>
 </body>
 
 </html>
