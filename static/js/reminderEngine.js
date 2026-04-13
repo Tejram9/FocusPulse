@@ -237,6 +237,28 @@ function _syncUI() {
 }
 
 /* ─── Fire the reminder ──────────────────────────────────────────── */
+async function _triggerEmail() {
+    console.log("Reminder Engine: Requesting backend to dispatch reminder email...");
+    try {
+        const response = await fetch('/api/reminder/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (data.mocked) {
+                console.warn("Reminder Engine: Email was ONLY MOCKED (SMTP credentials missing on server). See .env.example.");
+            } else {
+                console.log("Reminder Engine: Backend email dispatched successfully.");
+            }
+        } else {
+            console.warn("Reminder Engine: Backend email dispatch failed:", data.message || data.error);
+        }
+    } catch (err) {
+        console.error("Reminder Engine: Error calling email API:", err);
+    }
+}
+
 async function _fire() {
     const focusMin    = _safeInt(LS.FOCUS_MIN, 0);
     const distractions = _safeInt(LS.DISTRACTS, 0);
@@ -253,12 +275,15 @@ async function _fire() {
     const stamp = `${_todayPrefix()}T${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     localStorage.setItem(LS.LAST_FIRED, stamp);
 
-    const perm = await _requestPerm();
-    if (perm === 'granted') {
-        if (!_fireBrowserNotif(title, body)) _showToast(title, body, score);
+    /* Trigger browser notification */
+    if (Notification.permission === 'granted') {
+        _fireBrowserNotif(title, body);
     } else {
         _showToast(title, body, score);
     }
+
+    /* Fire backend email notification */
+    _triggerEmail();
 }
 
 /* ─── 60-second Tick ─────────────────────────────────────────────── */

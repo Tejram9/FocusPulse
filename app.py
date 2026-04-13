@@ -5,6 +5,13 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from db_setup import init_db, create_user, authenticate_user
 from datetime import date, timedelta, datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+
+# Load environment variables from .env if present
+load_dotenv()
 
 # ------------------------------
 # MOTIVATIONAL QUOTES
@@ -784,6 +791,98 @@ def toggle_task(task_id):
         update_user_streak(user_id)
 
     return jsonify({"success": True})
+
+
+# ------------------------------
+# EMAIL NOTIFICATION SYSTEM
+# ------------------------------
+def send_reminder_email(recipient_email, username, pending_tasks):
+    """
+    Sends an email to the user with their pending tasks.
+    Uses environment variables for SMTP credentials.
+    In MOCK mode (if variables are missing), it logs to the console.
+    """
+    email_user = os.environ.get("EMAIL_USER")
+    email_pass = os.environ.get("EMAIL_PASSWORD")
+    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port   = int(os.environ.get("SMTP_PORT", 587))
+
+    # Build the task list text
+    task_list_str = ""
+    if pending_tasks:
+        for t in pending_tasks:
+            task_list_str += f"- {t['task_title']}\n"
+    else:
+        task_list_str = "- No tasks remaining! Great job.\n"
+
+    # Build Email Content
+    msg = MIMEMultipart()
+    msg['From'] = email_user or "noreply@focuspulse.app"
+    msg['To'] = recipient_email
+    msg['Subject'] = "FocusPulse Reminder"
+
+    body = f"""Hello from FocusPulse,
+
+You still have these tasks remaining today:
+{task_list_str}
+Start your focus session and stay productive."""
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    # CHECK FOR SMTP CONFIG
+    if not email_user or not email_pass:
+        print("\n" + "="*50)
+        print("MOCK EMAIL SENT (SMTP Credentials Missing)")
+        print(f"To: {recipient_email}")
+        print(f"Subject: {msg['Subject']}")
+        print(f"Body:\n{body}")
+        print("="*50 + "\n")
+        return {"success": True, "mocked": True}
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(email_user, email_pass)
+            server.send_message(msg)
+        return {"success": True, "mocked": False}
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.route("/api/reminder/email", methods=["POST"])
+@login_required
+def trigger_reminder_email():
+    """
+    Endpoint triggered by the client-side reminder engine.
+    Fetches pending tasks and sends an email to the logged-in user.
+    """
+    user_id = session["user_id"]
+    user_name = session.get("user_name", "Student")
+    
+    conn = get_db_connection()
+    try:
+        # Get user email
+        user = conn.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        email = user["email"]
+        
+        # Get pending tasks
+        pending_tasks = conn.execute(
+            "SELECT task_title, deadline FROM tasks WHERE user_id = ? AND status = 'Pending'",
+            (user_id,)
+        ).fetchall()
+        
+        # Send the email
+        result = send_reminder_email(email, user_name, pending_tasks)
+        
+        conn.close()
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in trigger_reminder_email: {e}")
+        if conn: conn.close()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
