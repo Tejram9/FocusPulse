@@ -745,19 +745,16 @@ def statistics():
         best_streak=streak_info["best_streak"]
     )
 
-@app.route("/leaderboard")
+
+
+# ------------------------------
+# EXPENSE TRACKER ROUTE
+# ------------------------------
+@app.route("/expenses")
 @login_required
-def leaderboard():
-    # Mock data for demonstration of competitive leaderboard
-    # In a real app, this would query a global leaderboard table
-    mock_leaderboard = [
-        {"username": "ScholarPro", "score": 9800, "streak": 45, "rank": 1},
-        {"username": "StudyNinja", "score": 8540, "streak": 32, "rank": 2},
-        {"username": session.get("user_name", "You"), "score": 7320, "streak": 12, "rank": 3},
-        {"username": "FocusMaster", "score": 6400, "streak": 20, "rank": 4},
-        {"username": "NightOwl99", "score": 5100, "streak": 5, "rank": 5},
-    ]
-    return render_template("leaderboard.html", leaderboard=mock_leaderboard)
+def expenses():
+    return render_template("expenses.html")
+
 
 @app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
 @login_required

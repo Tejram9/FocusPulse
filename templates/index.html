@@ -30,7 +30,7 @@
                 <a href="{{ url_for('focus') }}">⏱️ Focus Mode</a>
                 <a href="{{ url_for('wellness') }}">🧘 Wellness</a>
                 <a href="{{ url_for('statistics') }}">📈 Statistics</a>
-                <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
+                <a href="{{ url_for('expenses') }}">💸 Expenses</a>
             </nav>
             <div class="app-sidebar-footer">
                 <div style="font-weight:600; font-size:14px;">{{ session.get('user_name', 'Student') }}</div>
@@ -38,7 +38,7 @@
                     <button id="themeToggleBtn"
                         style="background:transparent; border:none; cursor:pointer; font-size:18px;">🌙</button>
                     <a href="{{ url_for('logout') }}"
-                        style="color:var(--core-muted); text-decoration:none; font-size:14px; font-weight:600;">Out</a>
+                        style="color:var(--core-muted); text-decoration:none; font-size:14px; font-weight:600;">Logout</a>
                 </div>
             </div>
         </aside>
@@ -85,6 +85,8 @@
                     <a href="{{ url_for('focus') }}" class="btn"
                         style="background:var(--core-surface); color:var(--core-text); border:1px solid var(--core-border); padding:16px 36px; border-radius:12px; font-size:16px; font-weight:700; text-decoration:none;">Start
                         Focus Mode</a>
+                    <a href="{{ url_for('logout') }}" class="btn"
+                        style="background:transparent; color:var(--core-muted); border:1px solid var(--core-border); padding:16px 36px; border-radius:12px; font-size:16px; font-weight:700; text-decoration:none; transition: all 0.3s ease;">Logout</a>
                 </div>
 
                 <!-- AI MOTIVATION PREVIEW -->
