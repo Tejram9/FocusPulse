@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; color: #18181b; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { color: #4F46E5; margin-top: 0; }
+        p { line-height: 1.6; font-size: 16px; color: #3f3f46; }
+        ul { padding-left: 20px; }
+        li { line-height: 1.6; font-size: 16px; color: #3f3f46; margin-bottom: 8px; }
+        .btn { display: inline-block; background-color: #4F46E5; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin-top: 20px; }
+        .footer { margin-top: 30px; font-size: 14px; color: #a1a1aa; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Daily FocusPulse Reminder</h1>
+        <p>Hi {{ username }},</p>
+        
+        {% if pending_tasks %}
+            <p>You still have these tasks remaining today:</p>
+            <ul>
+                {% for task in pending_tasks %}
+                    <li><strong>{{ task.task_title }}</strong></li>
+                {% endfor %}
+            </ul>
+            <p>Start your focus session and stay productive!</p>
+        {% else %}
+            <p>No tasks remaining! Great job on staying productive.</p>
+        {% endif %}
+        
+        <a href="{{ url_for('focus', _external=True) }}" class="btn" style="color: white;">Start Focus Session</a>
+        
+        <div class="footer">
+            <p>&copy; FocusPulse. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -9,6 +9,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+from services.mail_service import mail, send_welcome_email, send_task_reminder_email
+from routes.auth_routes import auth_bp
 
 # Load environment variables from .env if present
 load_dotenv()
@@ -53,6 +55,19 @@ def get_daily_quote():
 
 app = Flask(__name__)
 app.secret_key = "focuspulse_super_secret_key"
+
+# Configure Flask-Mail
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() in ['true', '1', 't']
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@focuspulse.app')
+
+mail.init_app(app)
+
+# Register Blueprints
+app.register_blueprint(auth_bp)
 
 RAILWAY_DIR = "/app/data"
 if os.environ.get("RAILWAY_ENVIRONMENT") or os.path.exists(RAILWAY_DIR):
@@ -241,6 +256,7 @@ def signup():
         if user_id:
             session["user_id"] = user_id
             session["user_name"] = username
+            send_welcome_email(email, username)
             flash(f"Signup successful! Welcome, {username}", "success")
             return redirect(url_for("home"))
         else:
@@ -793,59 +809,6 @@ def toggle_task(task_id):
 # ------------------------------
 # EMAIL NOTIFICATION SYSTEM
 # ------------------------------
-def send_reminder_email(recipient_email, username, pending_tasks):
-    """
-    Sends an email to the user with their pending tasks.
-    Uses environment variables for SMTP credentials.
-    In MOCK mode (if variables are missing), it logs to the console.
-    """
-    email_user = os.environ.get("EMAIL_USER")
-    email_pass = os.environ.get("EMAIL_PASSWORD")
-    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-    smtp_port   = int(os.environ.get("SMTP_PORT", 587))
-
-    # Build the task list text
-    task_list_str = ""
-    if pending_tasks:
-        for t in pending_tasks:
-            task_list_str += f"- {t['task_title']}\n"
-    else:
-        task_list_str = "- No tasks remaining! Great job.\n"
-
-    # Build Email Content
-    msg = MIMEMultipart()
-    msg['From'] = email_user or "noreply@focuspulse.app"
-    msg['To'] = recipient_email
-    msg['Subject'] = "FocusPulse Reminder"
-
-    body = f"""Hello from FocusPulse,
-
-You still have these tasks remaining today:
-{task_list_str}
-Start your focus session and stay productive."""
-
-    msg.attach(MIMEText(body, 'plain'))
-
-    # CHECK FOR SMTP CONFIG
-    if not email_user or not email_pass:
-        print("\n" + "="*50)
-        print("MOCK EMAIL SENT (SMTP Credentials Missing)")
-        print(f"To: {recipient_email}")
-        print(f"Subject: {msg['Subject']}")
-        print(f"Body:\n{body}")
-        print("="*50 + "\n")
-        return {"success": True, "mocked": True}
-
-    try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(email_user, email_pass)
-            server.send_message(msg)
-        return {"success": True, "mocked": False}
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-        return {"success": False, "error": str(e)}
-
 @app.route("/api/reminder/email", methods=["POST"])
 @login_required
 def trigger_reminder_email():
@@ -872,7 +835,7 @@ def trigger_reminder_email():
         ).fetchall()
         
         # Send the email
-        result = send_reminder_email(email, user_name, pending_tasks)
+        result = send_task_reminder_email(email, user_name, pending_tasks)
         
         conn.close()
         return jsonify(result)

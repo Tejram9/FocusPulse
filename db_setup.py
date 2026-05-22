@@ -180,6 +180,21 @@ def init_db():
             if "date" not in focus_columns:
                 cursor.execute("ALTER TABLE focus_sessions ADD COLUMN date TEXT DEFAULT (date('now', 'localtime'))")
 
+            # ------------------------------
+            # PASSWORD RESETS TABLE
+            # ------------------------------
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                used BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """)
+
             conn.commit()
             print("Database schema created successfully.")
 
